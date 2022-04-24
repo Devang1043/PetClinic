@@ -5,15 +5,15 @@ pipeline {
 	         steps {
                 // step1 
                 echo 'compiling..'
-		            git url: 'https://github.com/lerndevops/PetClinic'
-		            sh script: '/opt/apache-maven-3.8.4/bin/mvn compile'
+		            git url: 'https://github.com/Devang1043/PetClinic'
+		            sh script: '/opt/maven/bin/mvn compile'
            }
         }
         stage('codereview-pmd') {
 	         steps {
                 // step2
                 echo 'codereview..'
-		            sh script: '/opt/apache-maven-3.8.4/bin/mvn -P metrics pmd:pmd'
+		            sh script: '/opt/maven/bin/mvn -P metrics pmd:pmd'
            }
 	         post {
                success {
@@ -25,7 +25,7 @@ pipeline {
 	          steps {
                 // step3
                 echo 'unittest..'
-	               sh script: '/opt/apache-maven-3.8.4/bin/mvn test'
+	               sh script: '/opt/maven/bin/mvn test'
             }
 	          post {
                success {
@@ -41,7 +41,7 @@ pipeline {
 	         steps {
                 // step4
                 echo 'codecoverage..'
-		            sh script: '/opt/apache-maven-3.8.4/bin/mvn cobertura:cobertura -Dcobertura.report.format=xml'
+		            sh script: '/opt/maven/bin/mvn cobertura:cobertura -Dcobertura.report.format=xml'
            }
 	         post {
                success {
@@ -53,15 +53,15 @@ pipeline {
 	         steps {
                 // step5
                 echo 'package......'
-		            sh script: '/opt/apache-maven-3.8.4/bin/mvn package'	
+		            sh script: '/opt/maven/bin/mvn package'	
            }		
         }
         stage('build & push docker image') {
 	         steps {
               withDockerRegistry(credentialsId: 'DOCKER_HUB_LOGIN', url: 'https://hub.docker.com/') {
                     sh script: 'cd  $WORKSPACE'
-                    sh script: 'docker build --file Dockerfile --tag docker.io/lerndevops/petclinic:$BUILD_NUMBER .'
-                    sh script: 'docker push docker.io/lerndevops/petclinic:$BUILD_NUMBER'
+                    sh script: 'docker build --file Dockerfile --tag docker.io/devang1043/petclinic:$BUILD_NUMBER .'
+                    sh script: 'docker push devang1043/petclinic:$BUILD_NUMBER'
               }	
            }		
         }
