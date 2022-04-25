@@ -1,16 +1,11 @@
 pipeline {
-      environment {
-      registry = "devang1043/petclinic"
-      registryCredential = 'DOCKER_HUB_LOGIN'
-      dockerImage = ''
-    }
     agent any
     stages {
         stage('compile') {
 	         steps {
                 // step1 
                 echo 'compiling..'
-		            git url: 'https://github.com/Devang1043/PetClinic'
+		            git url: 'https://github.com/lerndevops/PetClinic'
 		            sh script: '/opt/maven/bin/mvn compile'
            }
         }
@@ -61,30 +56,18 @@ pipeline {
 		            sh script: '/opt/maven/bin/mvn package'	
            }		
         }
-        stage('Building image') {
-              steps{
-                 script {
-                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
-               }
-             }
-         }
-        stage('Deploy Image') {
-            steps{
-              script {
-                docker.withRegistry( '', registryCredential ) {
-                dockerImage.push()
-               }
-            }
-          }
+        stage('build & push docker image') {
+	         steps {
+              withDockerRegistry(credentialsId: 'DOCKER_HUB_LOGIN', url: 'https://index.docker.io/v1/') {
+                    sh script: 'cd  $WORKSPACE'
+                    sh script: 'docker build --file Dockerfile --tag docker.io/lerndevops/petclinic:$BUILD_NUMBER .'
+                    sh script: 'docker push docker.io/lerndevops/petclinic:$BUILD_NUMBER'
+              }	
+           }		
         }
-        stage('Remove Unused docker image') {
-          steps{
-             sh "docker rmi $registry:$BUILD_NUMBER"
-           }
-       }
-    stage('Deploy-App-PROD') {
+    stage('Deploy-App-QA') {
   	   steps {
-    		sh 'ansible-playbook --inventory /tmp/inv $WORKSPACE/deploy/deploy-kube.yml --extra-vars "env=prod build=$BUILD_NUMBER"'
+              sh 'ansible-playbook --inventory /tmp/inv $WORKSPACE/deploy/deploy-kube.yml --extra-vars "env=qa build=$BUILD_NUMBER"'
 	   }
 	   post { 
               always { 
