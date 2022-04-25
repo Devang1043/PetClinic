@@ -7,10 +7,10 @@
             echo "deleteing previous application deployment"
             kubectl delete deployment `kubectl get deployment | grep -v NAME | awk '{print $1}' | grep petclinic`
             echo "creating new application deployment"
-            kubectl create deployment petclinic --image=lerndevops/petclinic:{{ build }}
+            kubectl create deployment petclinic --image=devang1043/petclinic:{{ build }}
          else 
             echo "Deploying petclinic Application"
-            kubectl create deployment petclinic --image=lerndevops/petclinic:{{ build }}
+            kubectl create deployment petclinic --image=devang1043/petclinic:{{ build }}
          fi
     - name: deploying service
       shell: |
@@ -21,8 +21,8 @@
             echo "Creating App Services"
             kubectl expose deployment petclinic --name petclinic --type NodePort --port 80 --target-port 8080
          fi
-    - name: increase replicas 
-      shell: kubectl scale deploy petclinic --replicas=2
+   # - name: increase replicas 
+   #   shell: kubectl scale deploy petclinic --replicas=2
       
     #- name: deploy app
     #  shell: kubectl create deployment petclinic --image=lerndevops/samplejavaapp:{{ build }}
