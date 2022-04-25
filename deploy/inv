@@ -1,5 +1,5 @@
 [qa]
-ip1 ansible_user=<user1> ansible_ssh_pass=<yourpassword>
+ip1 ansible_user=<user1> ansible_ssh_pass=<yourmachinepassword>
 
 [prod]
-ip1 ansible_user=<user1> ansible_ssh_pass=<yourpassword>
+ip1 ansible_user=<user1> ansible_ssh_pass=<yourmachinepassword>
