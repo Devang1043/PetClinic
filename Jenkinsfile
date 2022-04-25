@@ -1,44 +1,60 @@
-node {
-    def mvnHome = tool name: 'Maven_3', type: 'maven'
-    def mvnCli = "${mvnHome}/bin/mvn"
+pipeline {
+    agent any
+    stages {
+        stage('compile') {
+	         steps {
+                // step1 
+                echo 'compiling..'
+		            git url: 'https://github.com/lerndevops/PetClinic'
+		            sh script: '/opt/apache-maven-3.8.5/bin/mvn compile'
+           }
+        }
+        stage('codereview-pmd') {
+	         steps {
+                // step2
+                echo 'codereview..'
+		            sh script: '/opt/apache-maven-3.8.5/bin/mvn -P metrics pmd:pmd'
+           }
+	         post {
+               success {
+		             recordIssues enabledForFailure: true, tool: pmdParser(pattern: '**/target/pmd.xml')
+               }
+           }		
+        }
+        stage('unit-test') {
+	          steps {
+                // step3
+                echo 'unittest..'
+	               sh script: '/opt/apache-maven-3.8.5/bin/mvn test'
+            }
+	          post {
+               success {
+                   junit 'target/surefire-reports/*.xml'
+               }
+            }			
+        }
+        stage('codecoverage') {
 
-    properties([
-        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')),
-        disableConcurrentBuilds(),
-        [$class: 'GithubProjectProperty', displayName: '', projectUrlStr: 'https://github.com/gouthamchilakala/PetClinic.git/'],
-        [$class: 'ThrottleJobProperty', categories: [], limitOneJobWithMatchingParams: false, maxConcurrentPerNode: 0, maxConcurrentTotal: 0, paramsToUseForLimit: '', throttleEnabled: true, throttleOption: 'project'],
-        pipelineTriggers([githubPush()]),
-        parameters([string(defaultValue: 'DEV', description: 'env name', name: 'environment', trim: false)])
-    ])
-    stage('Checkout SCM'){
-        git branch: 'master', credentialsId: 'github-creds', url: 'https://github.com/gouthamchilakala/PetClinic'
-    }
-    stage('Read praram'){
-        echo "The environment chosen during the Job execution is ${params.environment}"
-        echo "$JENKINS_URL"
-    }
-    stage('maven compile'){
-        // def mvnHome = tool name: 'Maven_3.6', type: 'maven'
-        // def mvnCli = "${mvnHome}/bin/mvn"
-        sh "${mvnCli} clean compile"
-    }
-    stage('maven package'){
-        sh "${mvnCli} package -Dmaven.test.skip=true"
-    }
-    stage('Archive atifacts'){
-        archiveArtifacts artifacts: '**/*.war', onlyIfSuccessful: true
-    }
-    stage('Archive Test Results'){
-        junit allowEmptyResults: true, testResults: '**/surefire-reports/*.xml'
-    }
-    stage('Deploy To Tomcat'){
-        sshagent(['app-server']) {
-            sh 'scp -o StrictHostKeyChecking=no target/*.war ec2-user@ec2-52-70-39-48.compute-1.amazonaws.com:/opt/apache-tomcat-8.5.38/webapps/'
+           tools {
+              jdk 'java1.8'
+           }
+	         steps {
+                // step4
+                echo 'codecoverage..'
+		            sh script: '/opt/apache-maven-3.8.5/bin/mvn cobertura:cobertura -Dcobertura.report.format=xml'
+           }
+	         post {
+               success {
+	               cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'target/site/cobertura/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false                  
+               }
+           }		
+        }
+        stage('package/build-war') {
+	         steps {
+                // step5
+                echo 'package......'
+		            sh script: '/opt/apache-maven-3.8.5/bin/mvn package'	
+           }		
         }
     }
-    stage('Smoke Test'){
-        sleep 5
-        sh "curl ec2-52-70-39-48.compute-1.amazonaws.com:8080/petclinic"
-    }
-
 }

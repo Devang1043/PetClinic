@@ -1,0 +1,30 @@
+- hosts: "{{ env }}"
+  become: yes
+  tasks: 
+    - name: Deploying Application pods...
+      shell: | 
+         if [ `kubectl get deployment | grep -v NAME | awk '{print $1}' | grep petclinic | wc -l` -gt 0 ]; then  
+            echo "deleteing previous application deployment"
+            kubectl delete deployment `kubectl get deployment | grep -v NAME | awk '{print $1}' | grep petclinic`
+            echo "creating new application deployment"
+            kubectl create deployment petclinic --image=lerndevops/petclinic:{{ build }}
+         else 
+            echo "Deploying petclinic Application"
+            kubectl create deployment petclinic --image=lerndevops/petclinic:{{ build }}
+         fi
+    - name: deploying service
+      shell: |
+         if [ `kubectl get svc | grep petclinic  | awk '{print $1}' | wc -l` -gt 0 ]; then
+            echo "app service found, No actions taken"
+            #kubectl delete svc `kubectl get svc | grep petclinic | awk '{print $1}'`
+         else
+            echo "Creating App Services"
+            kubectl expose deployment petclinic --name petclinic --type NodePort --port 80 --target-port 8080
+         fi
+    - name: increase replicas 
+      shell: kubectl scale deploy petclinic --replicas=2
+      
+    #- name: deploy app
+    #  shell: kubectl create deployment petclinic --image=lerndevops/samplejavaapp:{{ build }}
+    #- name: deploy service
+    #  shell: kubectl expose deployment petclinic --name petclinic --type NodePort --port 80 --target-port 8080
