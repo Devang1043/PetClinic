@@ -82,10 +82,9 @@ pipeline {
              sh "docker rmi $registry:$BUILD_NUMBER"
            }
        }
-    stage('Deploy-App-QA') {
+    stage('Deploy-App-PROD') {
   	   steps {
-    		sh 'sed -i "s/bno/"$BUILD_NUMBER"/g" deploy-app.yml'
-    		sh 'kubectl apply -f deploy-app.yml'
+    		sh 'ansible-playbook --inventory /tmp/inv $WORKSPACE/deploy/deploy-kube.yml --extra-vars "env=prod build=$BUILD_NUMBER"'
 	   }
 	   post { 
               always { 
