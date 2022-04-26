@@ -17,7 +17,7 @@ node {
         echo "The environment chosen during the Job execution is ${params.environment}"
         echo "$JENKINS_URL"
     }
-    stage('maven compile'){
+    stage('maven compile stage'){
         // def mvnHome = tool name: 'Maven_3.6', type: 'maven'
         // def mvnCli = "${mvnHome}/bin/mvn"
         sh "${mvnCli} clean compile"
