@@ -84,7 +84,8 @@ pipeline {
        }
     stage('Deploy-App-PROD') {
   	   steps {
-    		sh 'ansible-playbook --inventory /tmp/inv $WORKSPACE/deploy/deploy-kube.yml --extra-vars "env=prod build=$BUILD_NUMBER"'
+    		sh 'sed -i "s/bno/"$BUILD_NUMBER"/g" $WORKSPACE/deploy/deploy-app.yml'
+    		sh 'kubectl apply -f $WORKSPACE/deploy/deploy-app.yml'
 	   }
 	   post { 
               always { 
